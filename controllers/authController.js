@@ -27,6 +27,12 @@ module.exports = {
   async profile(req, res) {
     const user = await User.findByPk(req.user.id, { attributes: ['id', 'name', 'email', 'createdAt'] });
     return res.json(user);
+  },
+
+  async logout(req, res) {
+    // Since JWTs are stateless, logout is handled client-side by removing the token
+    // This endpoint provides a confirmation that logout was successful
+    return res.json({ message: 'Logged out successfully' });
   }
 };
 
