@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 
+const { sequelize } = require('./models');
 const routes = require('./routes');
 
 const app = express();
@@ -36,6 +37,19 @@ app.use((err, req, res, next) => {
   res.status(status).json({ message: err.message || 'Server error' });
 });
 
-module.exports = app;
+const PORT = process.env.PORT || 5000;
+
+async function start() {
+  try {
+    await sequelize.authenticate();
+    console.log('DB connected');
+    app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+  } catch (e) {
+    console.error('Failed to start server:', e.message);
+    process.exit(1);
+  }
+}
+
+start();
 
 
