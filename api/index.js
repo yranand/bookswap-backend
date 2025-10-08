@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { Pool } = require('pg');
+const dns = require('dns').promises;
 
 // Create a singleton Pool to be reused across invocations in the same container
 let pool;
@@ -55,6 +56,25 @@ async function handler(req, res) {
   const poolInstance = getPool();
   let client;
   try {
+    // Optional DNS preflight when DEBUG_DB=1 to help diagnose ENOTFOUND
+    if (process.env.DEBUG_DB === '1') {
+      let hostToCheck;
+      if (poolInstance.options && poolInstance.options.host) {
+        hostToCheck = poolInstance.options.host;
+      } else if (poolInstance.options && poolInstance.options.connectionString) {
+        try {
+          const u = new URL(poolInstance.options.connectionString);
+          hostToCheck = u.hostname;
+        } catch (_) {}
+      }
+      if (hostToCheck) {
+        try {
+          await dns.lookup(hostToCheck);
+        } catch (e) {
+          return res.status(500).json({ ok: false, error: `DNS lookup failed for host: ${hostToCheck}`, detail: e.message });
+        }
+      }
+    }
     client = await poolInstance.connect();
     // Test query; replace with your actual logic
     const result = await client.query('SELECT NOW() as now');
