@@ -6,12 +6,17 @@ const config = require('../config/config')[env];
 
 const db = {};
 
-const sequelize = new Sequelize(
-  config.database,
-  config.username,
-  config.password,
-  config
-);
+// Prefer single connection URL via MYSQL_URL when provided by hosting platform
+const connectionUrl = process.env.MYSQL_URL || process.env.DATABASE_URL;
+
+const sequelize = connectionUrl
+  ? new Sequelize(connectionUrl, { ...config })
+  : new Sequelize(
+      config.database,
+      config.username,
+      config.password,
+      config
+    );
 
 const basename = path.basename(__filename);
 
